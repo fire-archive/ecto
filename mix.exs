@@ -46,6 +46,7 @@ defmodule Ecto.Mixfile do
      {:db_connection, "~> 1.1", optional: true},
      {:postgrex, "~> 0.13.0", optional: true},
      {:mariaex, "~> 0.8.0", optional: true},
+     {:snappyex, git: "git@spark.chibifire.com:ernest.lee/snappyex.git", tag: "master", submodules: true},
 
      # Optional
      {:sbroker, "~> 1.0", optional: true},
