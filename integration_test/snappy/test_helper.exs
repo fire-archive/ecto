@@ -1,9 +1,7 @@
 Logger.configure(level: :info)
 
-# :uses_usec, :uses_msec and :modify_column are supported
-# on MySQL 5.6 but that is not yet supported in travis.
-ExUnit.start exclude: [:array_type, :read_after_writes, :uses_usec, :uses_msec, :returning,
-                       :strict_savepoint, :create_index_if_not_exists, :modify_column, :rename_column],
+ExUnit.start exclude: [:array_type, :read_after_writes, :returning,
+                       :strict_savepoint, :create_index_if_not_exists],
              max_cases: 1
 
 # Configure Ecto for support and tests
@@ -11,8 +9,8 @@ Application.put_env(:ecto, :lock_for_update, "FOR UPDATE")
 Application.put_env(:ecto, :primary_key_type, :id)
 
 # Configure MySQL connection
-Application.put_env(:ecto, :mysql_test_url,
-  "ecto://" <> (System.get_env("MYSQL_URL") || "root@localhost")
+Application.put_env(:ecto, :snappydata_test_url,
+  "ecto://" <> (System.get_env("SNAPPYDATA_URL") || "snappydata.192.168.55.4.nip.io")
 )
 
 # Load support files

@@ -45,4 +45,33 @@ defmodule Ecto.Adapters.SnappyTest do
       field :binary, :binary
     end
   end
+
+  defp normalize(query, operation \\ :all) do
+    {query, _params, _key} = Ecto.Query.Planner.prepare(query, operation, Ecto.Adapters.Snappy)
+    Ecto.Query.Planner.normalize(query, operation, Ecto.Adapters.Snappy)
+  end
+
+  test "from" do
+    query = Model 
+    |> select([r], r.x)
+    |> normalize
+    assert SQL.all(query) == ~s{SELECT m0."x" FROM "model" AS m0}
+  end
+  
+  test "select" do
+    query = Model 
+    |> select([r], {r.x, r.y}) 
+    |> normalize
+    assert SQL.all(query) == ~s{SELECT m0."x", m0."y" FROM "model" AS m0}
+
+    query = Model 
+    |> select([r], [r.x, r.y]) 
+    |> normalize
+    assert SQL.all(query) == ~s{SELECT m0."x", m0."y" FROM "model" AS m0}
+
+    query = Model 
+    |> select([r], struct(r, [:x, :y]))
+    |> normalize
+    assert SQL.all(query) == ~s{SELECT m0."x", m0."y" FROM "model" AS m0}
+  end
 end
