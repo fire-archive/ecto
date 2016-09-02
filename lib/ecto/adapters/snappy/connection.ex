@@ -29,13 +29,15 @@ if Code.ensure_loaded?(Snappyex) do
       query = %Snappyex.Query{name: "", statement: sql}
       case DBConnection.prepare_execute(conn, query, params, opts) do
         {:ok, _, query} -> {:ok, query}
-        {:error, _} = err -> err
+        {:error, err} -> err
       end
     end
 
     def execute(conn, %{} = query, params, opts) do
       DBConnection.execute(conn, query, params, opts)
     end
+
+    ## Query
 
     alias Ecto.Query
     alias Ecto.Query.QueryExpr
@@ -121,7 +123,7 @@ if Code.ensure_loaded?(Snappyex) do
       boolean("HAVING", havings, sources, query)
     end
 
-        defp limit(%Query{limit: nil}, _sources), do: []
+   defp limit(%Query{limit: nil}, _sources), do: []
     defp limit(%Query{limit: %QueryExpr{expr: expr}} = query, sources) do
       "LIMIT " <> expr(expr, sources, query)
     end
@@ -187,7 +189,11 @@ if Code.ensure_loaded?(Snappyex) do
     defp join_qual(:left_lateral),  do: "LEFT OUTER JOIN LATERAL"
     defp join_qual(:right), do: "RIGHT OUTER JOIN"
     defp join_qual(:full),  do: "FULL OUTER JOIN"   
-
+        
+    defp index_expr(literal) when is_binary(literal),
+      do: literal
+    defp index_expr(literal),
+      do: quote_name(literal)
 
     defp expr({:^, [], [ix]}, _sources, _query) do
       "$#{ix+1}"
@@ -307,7 +313,154 @@ if Code.ensure_loaded?(Snappyex) do
       <<?", name::binary, ?">>
     end
 
+    defp options_expr(nil),
+      do: ""
+    defp options_expr(keyword) when is_list(keyword),
+      do: error!(nil, "SnappyData adapter does not support keyword lists in :options")
+    defp options_expr(options),
+      do: " #{options}"
+
+    ## DDL 
+    alias Ecto.Migration.{Table, Index, Reference, Constraint}
+
+    @drops [:drop, :drop_if_exists]
+    
+    def execute_ddl({command, %Table{}=table, columns}) when command in [:create, :create_if_not_exists] do
+      options       = options_expr(table.options)
+      if_not_exists = if command == :create_if_not_exists, do: " IF NOT EXISTS", else: ""
+      pk_definition = case pk_definition(columns) do
+        nil -> ""
+        pk -> ", #{pk}"
+      end
+
+      "CREATE TABLE" <> if_not_exists <>
+        " #{quote_table(table.prefix, table.name)}" <>
+        " (#{column_definitions(table, columns)}#{pk_definition})" <> options
+    end
+
+    def execute_ddl({:create_if_not_exists, %Index{}=index}) do
+      assemble(["",
+                "",
+                execute_ddl({:create, index}) <> ";",
+                ""])
+    end
+   
+    def execute_ddl({:create, %Index{}=index}) do
+      fields = Enum.map_join(index.columns, ", ", &index_expr/1)
+
+      assemble(["CREATE",
+                if_do(index.unique, "UNIQUE"),
+                "INDEX",
+                "",
+                quote_name(index.name),
+                "ON",
+                quote_table(index.prefix, index.table),
+                "",
+                "(#{fields})",
+                ""])
+    end
+
+    def execute_ddl({:create, %Constraint{}=constraint}) do
+      "ALTER TABLE #{quote_table(constraint.prefix, constraint.table)} ADD #{new_constraint_expr(constraint)}"
+    end
+
+    defp new_constraint_expr(%Constraint{check: check} = constraint) when is_binary(check) do
+      "CONSTRAINT #{quote_name(constraint.name)} CHECK (#{check})"
+    end
+    defp new_constraint_expr(%Constraint{exclude: exclude} = constraint) when is_binary(exclude) do
+      "CONSTRAINT #{quote_name(constraint.name)} EXCLUDE USING #{exclude}"
+    end
+
+    defp pk_definition(columns) do
+      pks =
+        for {_, name, _, opts} <- columns,
+            opts[:primary_key],
+            do: name
+
+      case pks do
+        [] -> nil
+        _  -> "PRIMARY KEY (" <> Enum.map_join(pks, ", ", &quote_name/1) <> ")"
+      end
+    end
+    
+    defp column_definitions(table, columns) do
+      Enum.map_join(columns, ", ", &column_definition(table, &1))
+    end
+
+    defp column_definition(table, {:add, name, %Reference{} = ref, opts}) do
+      assemble([
+        quote_name(name), reference_column_type(ref.type, opts),
+        column_options(ref.type, opts), reference_expr(ref, table, name)
+      ])
+    end
+
+    defp column_definition(_table, {:add, name, type, opts}) do
+      assemble([quote_name(name), column_type(type, opts), column_options(type, opts)])
+    end
+
+    defp reference_column_type(type, opts), do: column_type(type, opts)
+
+    defp column_options(type, opts) do
+      default = Keyword.fetch(opts, :default)
+      null    = Keyword.get(opts, :null)
+      [default_expr(default, type), null_expr(null)]
+    end
+    
+    defp reference_name(%Reference{name: nil}, table, column),
+      do: quote_name("#{table.name}_#{column}_fkey")
+    defp reference_name(%Reference{name: name}, _table, _column),
+      do: quote_name(name)
+
+    # Foreign key definition
+    defp reference_expr(%Reference{} = ref, table, name),
+      do: "CONSTRAINT #{reference_name(ref, table, name)} REFERENCES " <>
+          "#{quote_table(table.prefix, ref.table)}(#{quote_name(ref.column)})" <>
+          reference_on_delete(ref.on_delete) <> reference_on_update(ref.on_update)
+    
+    defp column_type({:array, type}, opts),
+      do: column_type(type, opts) <> "[]"
+    defp column_type(type, opts) do
+      size      = Keyword.get(opts, :size)
+      precision = Keyword.get(opts, :precision)
+      scale     = Keyword.get(opts, :scale)
+      type_name = ecto_to_db(type)
+
+      cond do
+        size            -> "#{type_name}(#{size})"
+        precision       -> "#{type_name}(#{precision},#{scale || 0})"
+        type == :string -> "#{type_name}(255)"
+        true            -> "#{type_name}"
+      end
+    end
+
+    defp reference_on_delete(:restrict_all), do: " ON DELETE RESTRICT"
+    defp reference_on_delete(_), do: ""
+
+    defp reference_on_update(_), do: ""
+    
+    defp default_expr({:ok, nil}, _type),
+      do: "DEFAULT NULL"
+    defp default_expr({:ok, literal}, _type) when is_binary(literal),
+      do: "DEFAULT '#{escape_string(literal)}'"
+    defp default_expr({:ok, literal}, _type) when is_number(literal) or is_boolean(literal),
+      do: "DEFAULT #{literal}"
+    defp default_expr({:ok, {:fragment, expr}}, _type),
+      do: "DEFAULT #{expr}"
+    defp default_expr({:ok, expr}, type),
+      do: raise(ArgumentError, "unknown default `#{inspect expr}` for type `#{inspect type}`. " <>
+                               ":default may be a string, number, boolean, empty list or a fragment(...)")
+    defp default_expr(:error, _),
+      do: []
+
+    defp null_expr(false), do: "NOT NULL"
+    defp null_expr(true), do: "NULL"
+    defp null_expr(_), do: []
+
     ## Helpers
+
+    defp if_do(condition, value) do
+      if condition, do: value, else: []
+    end
 
     defp get_source(query, sources, ix, source) do
       {expr, name, _schema} = elem(sources, ix)
@@ -324,6 +477,13 @@ if Code.ensure_loaded?(Snappyex) do
     defp error!(query, message) do
       raise Ecto.QueryError, query: query, message: message
     end
+
+    defp ecto_to_db(:id),         do: "integer"
+    defp ecto_to_db(:binary_id),  do: "varchar(36)"
+    defp ecto_to_db(:string),     do: "varchar"
+    defp ecto_to_db(:datetime),   do: "timestamp"
+    defp ecto_to_db(:binary),     do: "bytea"
+    defp ecto_to_db(other),       do: Atom.to_string(other)
 
   end
 end

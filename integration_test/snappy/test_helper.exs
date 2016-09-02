@@ -8,9 +8,9 @@ ExUnit.start exclude: [:array_type, :read_after_writes, :returning,
 Application.put_env(:ecto, :lock_for_update, "FOR UPDATE")
 Application.put_env(:ecto, :primary_key_type, :id)
 
-# Configure MySQL connection
+# Configure SnappyData connection
 Application.put_env(:ecto, :snappydata_test_url,
-  "ecto://" <> (System.get_env("SNAPPYDATA_URL") || "snappydata.192.168.55.4.nip.io")
+  "ecto://" <> (System.get_env("SNAPPYDATA_URL") || "snappydata.192.168.55.4.nip.io:1531")
 )
 
 # Load support files
@@ -29,7 +29,8 @@ alias Ecto.Integration.TestRepo
 
 Application.put_env(:ecto, TestRepo,
   adapter: Ecto.Adapters.Snappy,
-  url: Application.get_env(:ecto, :mysql_test_url) <> "/ecto_test",
+  url: Application.get_env(:ecto, :snappydata_test_url) <> "/ecto_test",
+  host: "snappydata.192.168.55.4.nip.io",
   pool: Ecto.Adapters.SQL.Sandbox,
   ownership_pool: pool)
 
@@ -43,7 +44,7 @@ alias Ecto.Integration.PoolRepo
 Application.put_env(:ecto, PoolRepo,
   adapter: Ecto.Adapters.Snappy,
   pool: pool,
-  url: Application.get_env(:ecto, :mysql_test_url) <> "/ecto_test",
+  url: Application.get_env(:ecto, :snappydata_test_url) <> "/ecto_test",
   pool_size: 10)
 
 defmodule Ecto.Integration.PoolRepo do
