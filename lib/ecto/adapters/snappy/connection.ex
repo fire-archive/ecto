@@ -310,7 +310,7 @@ if Code.ensure_loaded?(Snappyex) do
       if String.contains?(name, "\"") do
         error!(nil, "bad table name #{inspect name}")
       end
-      <<?", name::binary, ?">>
+      name
     end
 
     defp options_expr(nil),
@@ -325,17 +325,30 @@ if Code.ensure_loaded?(Snappyex) do
 
     @drops [:drop, :drop_if_exists]
     
-    def execute_ddl({command, %Table{}=table, columns}) when command in [:create, :create_if_not_exists] do
+    def execute_ddl({command, %Table{}=table, columns}) 
+    when command in [:create] do
       options       = options_expr(table.options)
-      if_not_exists = if command == :create_if_not_exists, do: " IF NOT EXISTS", else: ""
       pk_definition = case pk_definition(columns) do
         nil -> ""
         pk -> ", #{pk}"
       end
+    
+      "CREATE TABLE" <>
+      " #{quote_table(table.prefix, table.name)}" <>
+      " (#{column_definitions(table, columns)}#{pk_definition})" <> options
+    end
 
-      "CREATE TABLE" <> if_not_exists <>
-        " #{quote_table(table.prefix, table.name)}" <>
-        " (#{column_definitions(table, columns)}#{pk_definition})" <> options
+    def execute_ddl({command, %Table{}=table, columns}) 
+    when command in [:create_if_not_exists] do
+      options       = options_expr(table.options)
+      pk_definition = case pk_definition(columns) do
+        nil -> ""
+        pk -> ", #{pk}"
+      end
+    
+      "CREATE TABLE" <>
+      " #{quote_table(table.prefix, table.name)}" <>
+      " (#{column_definitions(table, columns)}#{pk_definition})" <> options
     end
 
     def execute_ddl({:create_if_not_exists, %Index{}=index}) do
