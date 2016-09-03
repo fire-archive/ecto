@@ -1,4 +1,4 @@
-defmodule Ecto.Adapters.Snappy do
+defmodule Ecto.Adapters.SnappyData do
   @moduledoc """
   """
 

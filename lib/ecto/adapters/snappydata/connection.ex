@@ -1,6 +1,6 @@
 if Code.ensure_loaded?(Snappyex) do
 
-  defmodule Ecto.Adapters.Snappy.Connection do
+  defmodule Ecto.Adapters.SnappyData.Connection do
     @moduledoc false
 
     @default_port 1531
@@ -324,22 +324,21 @@ if Code.ensure_loaded?(Snappyex) do
     alias Ecto.Migration.{Table, Index, Reference, Constraint}
 
     @drops [:drop, :drop_if_exists]
-    
-    def execute_ddl({command, %Table{}=table, columns}) 
-    when command in [:create] do
-      options       = options_expr(table.options)
-      pk_definition = case pk_definition(columns) do
-        nil -> ""
-        pk -> ", #{pk}"
-      end
-    
-      "CREATE TABLE" <>
-      " #{quote_table(table.prefix, table.name)}" <>
-      " (#{column_definitions(table, columns)}#{pk_definition})" <> options
+        
+    use Ecto.Adapters.SQL
+
+    def execute_ddl(repo, {:create_if_not_exists, %Table{} = table, columns}, opts) do
+      # do with the check
+    end
+
+    def execute_ddl(repo, definition, opts) do
+      sql = execute_ddl(definition)
+      Ecto.Adapters.SQL.query!(repo, sql, [], opts)
+      :ok
     end
 
     def execute_ddl({command, %Table{}=table, columns}) 
-    when command in [:create_if_not_exists] do
+    when command in [:create] do
       options       = options_expr(table.options)
       pk_definition = case pk_definition(columns) do
         nil -> ""

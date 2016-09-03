@@ -28,7 +28,7 @@ pool =
 alias Ecto.Integration.TestRepo
 
 Application.put_env(:ecto, TestRepo,
-  adapter: Ecto.Adapters.Snappy,
+  adapter: Ecto.Adapters.SnappyData,
   url: Application.get_env(:ecto, :snappydata_test_url) <> "/ecto_test",
   host: "snappydata.192.168.55.4.nip.io",
   pool: Ecto.Adapters.SQL.Sandbox,
@@ -42,7 +42,7 @@ end
 alias Ecto.Integration.PoolRepo
 
 Application.put_env(:ecto, PoolRepo,
-  adapter: Ecto.Adapters.Snappy,
+  adapter: Ecto.Adapters.SnappyData,
   pool: pool,
   url: Application.get_env(:ecto, :snappydata_test_url) <> "/ecto_test",
   pool_size: 10)

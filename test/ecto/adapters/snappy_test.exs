@@ -1,12 +1,12 @@
 Code.require_file "../../../integration_test/support/types.exs", __DIR__
 
-defmodule Ecto.Adapters.SnappyTest do
+defmodule Ecto.Adapters.SnappyDataTest do
   use ExUnit.Case, async: true
 
   import Ecto.Query
 
   alias Ecto.Queryable
-  alias Ecto.Adapters.Snappy.Connection, as: SQL
+  alias Ecto.Adapters.SnappyData.Connection, as: SQL
 
   defmodule Model do
     use Ecto.Schema
@@ -30,7 +30,7 @@ defmodule Ecto.Adapters.SnappyTest do
     use Ecto.Schema
 
     schema "model2" do
-      belongs_to :post, Ecto.Adapters.SnappyTest.Model,
+      belongs_to :post, Ecto.Adapters.SnappyDataTest.Model,
         references: :x,
         foreign_key: :z
     end
@@ -47,8 +47,8 @@ defmodule Ecto.Adapters.SnappyTest do
   end
 
   defp normalize(query, operation \\ :all) do
-    {query, _params, _key} = Ecto.Query.Planner.prepare(query, operation, Ecto.Adapters.Snappy)
-    Ecto.Query.Planner.normalize(query, operation, Ecto.Adapters.Snappy)
+    {query, _params, _key} = Ecto.Query.Planner.prepare(query, operation, Ecto.Adapters.SnappyData)
+    Ecto.Query.Planner.normalize(query, operation, Ecto.Adapters.SnappyData)
   end
 
   test "from" do
