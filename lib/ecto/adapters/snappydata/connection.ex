@@ -324,18 +324,7 @@ if Code.ensure_loaded?(Snappyex) do
     alias Ecto.Migration.{Table, Index, Reference, Constraint}
 
     @drops [:drop, :drop_if_exists]
-        
-    use Ecto.Adapters.SQL
 
-    def execute_ddl(repo, {:create_if_not_exists, %Table{} = table, columns}, opts) do
-      # do with the check
-    end
-
-    def execute_ddl(repo, definition, opts) do
-      sql = execute_ddl(definition)
-      Ecto.Adapters.SQL.query!(repo, sql, [], opts)
-      :ok
-    end
 
     def execute_ddl({command, %Table{}=table, columns}) 
     when command in [:create] do
