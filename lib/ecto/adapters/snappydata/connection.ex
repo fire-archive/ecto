@@ -327,16 +327,16 @@ if Code.ensure_loaded?(Snappyex) do
 
 
     def execute_ddl({command, %Table{}=table, columns}) 
-    when command in [:create] do
+    when command in [:create, :create_if_not_exists] do
       options       = options_expr(table.options)
       pk_definition = case pk_definition(columns) do
-        nil -> ""
-        pk -> ", #{pk}"
-      end
-    
+                        nil -> ""
+                        pk -> ", #{pk}"
+                      end
+
       "CREATE TABLE" <>
-      " #{quote_table(table.prefix, table.name)}" <>
-      " (#{column_definitions(table, columns)}#{pk_definition})" <> options
+        " #{quote_table(table.prefix, table.name)}" <>
+        " (#{column_definitions(table, columns)}#{pk_definition})" <> options
     end
 
     def execute_ddl({:create_if_not_exists, %Index{}=index}) do
