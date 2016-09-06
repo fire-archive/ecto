@@ -17,17 +17,23 @@ defmodule Ecto.Adapters.SnappyData do
   @conn __MODULE__.Connection
 
   def upcase_table({type, %Table{} = table, columns}) do
-    table = case Map.get(table, :prefix) do
-              nil -> %{table | prefix: "APP"}
-              _ -> table
-            end
     table = %{table | name: String.upcase to_string table.name}
     table = %{table | prefix: String.upcase table.prefix}
     {type, table, columns}
   end
 
+  def check_for_empty_prefix({type, %Table{} = table, columns}) do
+    table = case Map.get(table, :prefix) do
+              nil -> %{table | prefix: "APP"}
+              _ -> table
+            end
+    {type, table, columns}
+  end
+
   def execute_ddl(repo, definition, opts) do
-    definition = upcase_table(definition)
+    definition = definition
+    |> check_for_empty_prefix
+    |> upcase_table
     case definition do
       {:create_if_not_exists, %Table{} = table, columns} ->
         sql = "SELECT tablename " <>
