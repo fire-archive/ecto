@@ -41,7 +41,7 @@ defmodule Ecto.Adapters.SnappyData do
   def execute_sql(repo, definition = {:create_if_not_exists, %Table{} = table, columns}, opts) do
       sql = "SELECT tablename " <>
         "FROM sys.systables " <>
-        "WHERE TABLESCHEMANAME = '#{table.prefix}' and TABLENAME = '#{table.name}'"
+        "WHERE TABLESCHEMANAME = '#{table.prefix}' AND TABLENAME = '#{table.name}'"
       unless if_table_exists(Ecto.Adapters.SQL.query!(repo, sql, [], opts)) do
         sql = @conn.execute_ddl(definition)
         IO.inspect sql
