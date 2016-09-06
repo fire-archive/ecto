@@ -18,8 +18,15 @@ defmodule Ecto.Adapters.SnappyData do
 
   def execute_ddl(repo, definition, opts) do
      case definition do
-     {:create_if_not_exists, %Table{} = table, columns} -> 
-       sql = "SELECT tablename FROM sys.systables where TABLESCHEMANAME = 'APP' and TABLENAME = 'SCHEMA_MIGRATIONS'"
+       {:create_if_not_exists, %Table{} = table, columns} ->
+         table = case Map.get(table, :prefix) do
+           nil -> %{table | prefix: "APP"}
+           _ -> table
+                 end
+         sql = "SELECT tablename " <>
+           "FROM sys.systables " <>
+           "WHERE TABLESCHEMANAME = '#{String.upcase table.prefix}' and TABLENAME = '#{String.upcase to_string table.name}'"
+         IO.inspect sql
          unless if_table_exists(Ecto.Adapters.SQL.query!(repo, sql, [], opts)) do
          sql = @conn.execute_ddl(definition)
          Ecto.Adapters.SQL.query!(repo, sql, [], opts)
