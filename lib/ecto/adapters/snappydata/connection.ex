@@ -487,6 +487,8 @@ if Code.ensure_loaded?(Snappyex) do
     defp ecto_to_db(:text),       do: "VARCHAR(32672)"
     defp ecto_to_db(:uuid),       do: "VARCHAR(36)"
     defp ecto_to_db(:serial),     do: "BIGINT GENERATED ALWAYS AS IDENTITY"
+    defp ecto_to_db(:map),        do: "JSON"
+    defp ecto_to_db({:map, _}),   do: "JSON"
     defp ecto_to_db(other),       do: Atom.to_string(other)
 
   end
