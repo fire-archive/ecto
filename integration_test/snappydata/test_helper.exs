@@ -31,6 +31,7 @@ Application.put_env(:ecto, TestRepo,
   adapter: Ecto.Adapters.SnappyData,
   url: Application.get_env(:ecto, :snappydata_test_url) <> "/ecto_test",
   host: "snappydata.192.168.55.4.nip.io",
+  port: 1531,
   pool: Ecto.Adapters.SQL.Sandbox,
   ownership_pool: pool)
 
