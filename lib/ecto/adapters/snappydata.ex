@@ -39,14 +39,14 @@ defmodule Ecto.Adapters.SnappyData do
   end
 
   def execute_sql(repo, definition = {:create_if_not_exists, %Table{} = table, columns}, opts) do
-      sql = "SELECT tablename " <>
-        "FROM sys.systables " <>
-        "WHERE TABLESCHEMANAME = '#{table.prefix}' AND TABLENAME = '#{table.name}'"
-      unless if_table_exists(Ecto.Adapters.SQL.query!(repo, sql, [], opts)) do
-        sql = @conn.execute_ddl(definition)
-        IO.inspect sql
-        Ecto.Adapters.SQL.query!(repo, sql, [], opts)
-      end
+    sql = "SELECT tablename " <>
+      "FROM sys.systables " <>
+      "WHERE TABLESCHEMANAME = '#{table.prefix}' AND TABLENAME = '#{table.name}'"
+    unless extract_table_row(Ecto.Adapters.SQL.query!(repo, sql, [], opts)) do
+      sql = @conn.execute_ddl(definition)
+      IO.inspect sql
+      Ecto.Adapters.SQL.query!(repo, sql, [], opts)
+    end
   end
 
   def execute_sql(repo, definition, opts) do
@@ -54,11 +54,11 @@ defmodule Ecto.Adapters.SnappyData do
     Ecto.Adapters.SQL.query!(repo, sql, [], opts)
   end
 
-  def if_table_exists([[table]]) do
+  def extract_table_row(%Snappyex.Result{rows: [[table]]}) do
     table
   end
 
-  def if_table_exists([]) do
+  def extract_table_row([]) do
     nil
   end
 end

@@ -72,6 +72,6 @@ end
 
 {:ok, _pid} = TestRepo.start_link
 {:ok, _pid} = PoolRepo.start_link
-:ok = Ecto.Migrator.up(TestRepo, 0, Ecto.Integration.Migration, log: false)
+{:ok, %Snappyex.Query{}, []} = Ecto.Migrator.up(TestRepo, 0, Ecto.Integration.Migration, log: false)
 Ecto.Adapters.SQL.Sandbox.mode(TestRepo, :manual)
 Process.flag(:trap_exit, true)
