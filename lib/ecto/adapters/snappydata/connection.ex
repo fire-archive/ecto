@@ -479,11 +479,14 @@ if Code.ensure_loaded?(Snappyex) do
       raise Ecto.QueryError, query: query, message: message
     end
 
-    defp ecto_to_db(:id),         do: "integer"
-    defp ecto_to_db(:binary_id),  do: "varchar(36)"
-    defp ecto_to_db(:string),     do: "varchar"
-    defp ecto_to_db(:datetime),   do: "timestamp"
-    defp ecto_to_db(:binary),     do: "bytea"
+    defp ecto_to_db(:id),         do: "BIGINT"
+    defp ecto_to_db(:binary_id),  do: "VARCHAR(36)"
+    defp ecto_to_db(:string),     do: "VARCHAR(32672)"
+    defp ecto_to_db(:datetime),   do: "TIMESTAMP"
+    defp ecto_to_db(:binary),     do: "BLOB"
+    defp ecto_to_db(:text),       do: "VARCHAR(32672)"
+    defp ecto_to_db(:uuid),       do: "VARCHAR(36)"
+    defp ecto_to_db(:serial),     do: "BIGINT GENERATED ALWAYS AS IDENTITY"
     defp ecto_to_db(other),       do: Atom.to_string(other)
 
   end
