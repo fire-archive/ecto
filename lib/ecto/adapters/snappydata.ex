@@ -58,7 +58,7 @@ defmodule Ecto.Adapters.SnappyData do
     table
   end
 
-  def extract_table_row([]) do
+  def extract_table_row(%Snappyex.Result{rows: []}) do
     nil
   end
 end
