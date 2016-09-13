@@ -30,12 +30,26 @@ defmodule Ecto.Adapters.SnappyData do
     {type, table, columns}
   end
 
+  def upcase_table({type, %Ecto.Migration.Index{} = index}) do
+    index = %{index | name: String.upcase to_string index.name}
+    index = %{index | prefix: String.upcase index.prefix}
+    {type, index}
+  end
+
   def check_for_empty_prefix({type, %Table{} = table, columns}) do
     table = case Map.get(table, :prefix) do
               nil -> %{table | prefix: "APP"}
               _ -> table
             end
     {type, table, columns}
+  end
+
+  def check_for_empty_prefix({type, %Ecto.Migration.Index{} = index}) do
+    index = case Map.get(index, :prefix) do
+              nil -> %{index | prefix: "APP"}
+              _ -> index
+            end
+    {type, index}
   end
 
   def execute_sql(repo, definition = {:create_if_not_exists, %Table{} = table, columns}, opts) do

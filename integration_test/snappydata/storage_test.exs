@@ -31,7 +31,7 @@ defmodule Ecto.Integration.StorageTest do
     run_snappydata("CREATE TABLE posts (title varchar(20));", ["-D", params()[:database]])
   end
 
-  def run_mysql(sql, args \\ []) do
+  def run_snappydata(sql, args \\ []) do
     args = ["-u", params()[:username], "-e", sql | args]
     System.cmd "mysql", args
   end

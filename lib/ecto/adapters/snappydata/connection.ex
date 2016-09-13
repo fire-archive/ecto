@@ -480,15 +480,17 @@ if Code.ensure_loaded?(Snappyex) do
       raise Ecto.QueryError, query: query, message: message
     end
 
-    defp ecto_to_db(:id),         do: "BIGINT"
+    defp ecto_to_db(:id),         do: "BIGINT"    
     defp ecto_to_db(:binary_id),  do: "VARCHAR(36)"
-    defp ecto_to_db(:string),     do: "VARCHAR(32672)"
+    defp ecto_to_db(:string),     do: "VARCHAR"
     defp ecto_to_db(:datetime),   do: "TIMESTAMP"
+    defp ecto_to_db(:boolean),    do: "SMALLINT"
     defp ecto_to_db(:binary),     do: "BLOB"
     defp ecto_to_db(:text),       do: "VARCHAR(32672)"
     defp ecto_to_db(:uuid),       do: "VARCHAR(36)"
     defp ecto_to_db(:map),        do: "JSON"
     defp ecto_to_db({:map, _}),   do: "JSON"
+    defp ecto_to_db(:serial),     do: "BIGINT"
     defp ecto_to_db(other),       do: Atom.to_string(other)
 
   end
