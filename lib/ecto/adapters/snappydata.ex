@@ -4,6 +4,7 @@ defmodule Ecto.Adapters.SnappyData do
 
   # Inherit all behaviour from Ecto.Adapters.SQL
   use Ecto.Adapters.SQL, :snappyex
+  require Logger
 
   # And provide a custom storage implementation
   #@behaviour Ecto.Adapter.Storage
@@ -53,20 +54,25 @@ defmodule Ecto.Adapters.SnappyData do
   end 
 
   def execute_sql(repo, definition = {:create_if_not_exists, %Table{} = table, columns}, opts) do 
+    execute_sql_if_exist(repo, definition, table, opts)
+  end 
+
+  def execute_sql_if_exist(repo, definition, table, opts) do
     sql = "SELECT tablename " <> 
       "FROM sys.systables " <> 
       "WHERE TABLESCHEMANAME = '#{table.prefix}' AND TABLENAME = '#{table.name}'" 
+    Logger.debug sql
     unless extract_table_row(Ecto.Adapters.SQL.query!(repo, sql, [], opts)) do 
       sql = @conn.execute_ddl(definition) 
-      IO.inspect sql 
+      Logger.debug sql 
       Ecto.Adapters.SQL.query!(repo, sql, [], opts) 
     end 
-  end 
-
+  end
 
   def execute_sql(repo, definition, opts) do
     sql = @conn.execute_ddl(definition)
     try do
+      Logger.debug sql 
       Ecto.Adapters.SQL.query!(repo, sql, [], opts)
     rescue
       e in Snappyex.Model.SnappyException -> 
