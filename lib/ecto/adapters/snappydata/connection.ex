@@ -29,7 +29,7 @@ if Code.ensure_loaded?(Snappyex) do
       query = %Snappyex.Query{name: "", statement: sql}
       case DBConnection.prepare_execute(conn, query, params, opts) do
         {:ok, _, query} -> {:ok, query}
-        {:error, err} -> err
+        {:error, err} -> {:error, err}
       end
     end
 
@@ -42,6 +42,60 @@ if Code.ensure_loaded?(Snappyex) do
     alias Ecto.Query
     alias Ecto.Query.QueryExpr
     alias Ecto.Query.JoinExpr
+
+    def insert(prefix, table, header, rows, returning) do
+      prefix = unless prefix do
+        "APP"
+      end
+      
+      values =
+        if header == [] do
+          "VALUES " <> Enum.map_join(rows, ",", fn _ -> "(DEFAULT)" end)
+        else
+          "(" <> Enum.map_join(header, ",", &quote_name/1) <> ") " <>
+          "VALUES " <> insert_all(rows, 1, "")
+        end
+
+      assemble(["INSERT INTO #{quote_table(prefix, table)}", "",
+                values])
+    end
+
+    def insert(_prefix, _table, _header, _rows, _on_conflict, _returning) do
+      error!(nil, "RETURNING is not supported in insert_all by SnappyData")
+    end
+
+    defp on_conflict({:raise, _, []}, _header) do
+      error!(nil, "on_conflict is not supported by SnappyData")
+    end
+    defp on_conflict({:nothing, _, []}, [field | _]) do
+      error!(nil, "on_conflict is not supported by SnappyData")
+    end
+    defp on_conflict({query, _, []}, _header) do
+      error!(nil, "on_conflict is not supported by SnappyData")
+    end
+        
+    defp insert_each([nil|t], counter, acc),
+      do: insert_each(t, counter, acc <> ",DEFAULT")
+    defp insert_each([_|t], counter, acc),
+      do: insert_each(t, counter + 1, acc <> ",$" <> Integer.to_string(counter))
+    defp insert_each([], counter, "," <> acc),
+      do: {counter, acc}
+
+    defp insert_all([row|rows], counter, acc) do
+      {counter, row} = insert_each(row, counter, "")
+      insert_all(rows, counter, acc <> ",(" <> row <> ")")
+    end
+    defp insert_all([], _counter, "," <> acc) do
+      acc
+    end
+
+    defp insert_as({%{from: from} = query, _, _}) do
+      {_, name} = get_source(%{query | joins: []}, create_names(query), 0, from)
+      error!(nil, "insert_as is not supported by SnappyData")
+    end
+    defp insert_as({_, _, _}) do
+      []
+    end
 
     def all(query) do
       sources        = create_names(query)
