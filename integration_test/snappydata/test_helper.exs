@@ -52,11 +52,11 @@ defmodule Ecto.Integration.PoolRepo do
   use Ecto.Integration.Repo, otp_app: :ecto
 
   def create_prefix(prefix) do
-    "create database #{prefix}"
+    "create schema #{prefix}"
   end
 
   def drop_prefix(prefix) do
-    "drop database #{prefix}"
+    "drop schema #{prefix}"
   end
 end
 
