@@ -538,8 +538,8 @@ if Code.ensure_loaded?(Snappyex) do
     defp ecto_to_db(:binary),     do: "BLOB"
     defp ecto_to_db(:text),       do: "STRING"
     defp ecto_to_db(:uuid),       do: "VARCHAR(36)"
-    defp ecto_to_db(:map),        do: "CLOB"
-    defp ecto_to_db({:map, _}),   do: "CLOB"
+    defp ecto_to_db(:map),        do: "STRING"
+    defp ecto_to_db({:map, _}),   do: "STRING"
     defp ecto_to_db(:serial),     do: "BIGINT"
     defp ecto_to_db(other),       do: Atom.to_string(other)
 
