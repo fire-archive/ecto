@@ -58,26 +58,21 @@ defmodule Ecto.Adapters.SnappyData do
   end 
 
   def execute_sql_if_exist(repo, definition, table, opts) do
-    sql = "SELECT tablename " <> 
+    sql_if_exist = "SELECT tablename " <> 
       "FROM sys.systables " <> 
       "WHERE TABLESCHEMANAME = '#{table.prefix}' AND TABLENAME = '#{table.name}'" 
-    Logger.debug sql
-    unless extract_table_row(Ecto.Adapters.SQL.query!(repo, sql, [], opts)) do 
+    Logger.debug "#{inspect self()} execute_sql_if_exist queried " <> sql_if_exist
+    unless extract_table_row(Ecto.Adapters.SQL.query!(repo, sql_if_exist, [], opts)) do 
       sql = @conn.execute_ddl(definition) 
-      Logger.debug sql 
+      Logger.debug "#{inspect self()} unless extract_table_row queried " <> sql 
       Ecto.Adapters.SQL.query!(repo, sql, [], opts) 
     end 
   end
 
   def execute_sql(repo, definition, opts) do
     sql = @conn.execute_ddl(definition)
-    try do
-      Logger.debug sql 
-      Ecto.Adapters.SQL.query!(repo, sql, [], opts)
-    rescue
-      e in Snappyex.Model.SnappyException -> 
-        e
-    end
+    Logger.debug "#{inspect self()} execute_sql queried " <> sql 
+    Ecto.Adapters.SQL.query!(repo, sql, [], opts)
   end
 
   def extract_table_row(%Snappyex.Result{rows: [[table]]}) do
