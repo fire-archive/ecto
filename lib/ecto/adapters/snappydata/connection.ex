@@ -43,7 +43,7 @@ if Code.ensure_loaded?(Snappyex) do
     alias Ecto.Query.QueryExpr
     alias Ecto.Query.JoinExpr
 
-    def insert(prefix, table, header, rows, returning) do
+    def insert(prefix, table, header, rows, _on_conflict, returning) do
       prefix = unless prefix do
         "APP"
       end
@@ -58,10 +58,6 @@ if Code.ensure_loaded?(Snappyex) do
 
       assemble(["INSERT INTO #{quote_table(prefix, table)}", "",
                 values])
-    end
-
-    def insert(_prefix, _table, _header, _rows, _on_conflict, _returning) do
-      error!(nil, "RETURNING is not supported in insert_all by SnappyData")
     end
 
     defp on_conflict({:raise, _, []}, _header) do
@@ -537,13 +533,13 @@ if Code.ensure_loaded?(Snappyex) do
     defp ecto_to_db(:id),         do: "BIGINT"    
     defp ecto_to_db(:binary_id),  do: "VARCHAR(36)"
     defp ecto_to_db(:string),     do: "VARCHAR"
-    defp ecto_to_db(:datetime),   do: "TIMESTAMP"
+    defp ecto_to_db(:naive_datetime),   do: "TIMESTAMP"
     defp ecto_to_db(:boolean),    do: "SMALLINT"
     defp ecto_to_db(:binary),     do: "BLOB"
     defp ecto_to_db(:text),       do: "STRING"
     defp ecto_to_db(:uuid),       do: "VARCHAR(36)"
-    defp ecto_to_db(:map),        do: "JSON"
-    defp ecto_to_db({:map, _}),   do: "JSON"
+    defp ecto_to_db(:map),        do: "CLOB"
+    defp ecto_to_db({:map, _}),   do: "CLOB"
     defp ecto_to_db(:serial),     do: "BIGINT"
     defp ecto_to_db(other),       do: Atom.to_string(other)
 
