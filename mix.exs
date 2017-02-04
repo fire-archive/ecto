@@ -3,7 +3,6 @@ defmodule Ecto.Mixfile do
 
   @version "2.2.0-dev"
   @adapters [:pg, :mysql, :snappydata]
-
   def project do
     [app: :ecto,
      version: @version,
