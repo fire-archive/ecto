@@ -5,13 +5,11 @@ if Code.ensure_loaded?(Snappyex) do
 
     @default_port 1531
     @behaviour Ecto.Adapters.SQL.Connection
-
     def child_spec(opts) do
       opts =
         opts
         |> Keyword.update(:port, @default_port, &normalize_port/1)
         |> Keyword.put(:types, true)
-
       Snappyex.child_spec(opts)
     end
 
@@ -351,8 +349,15 @@ if Code.ensure_loaded?(Snappyex) do
       <<?", name::binary, ?">>
     end  
 
-    defp quote_table(nil, name),    do: quote_table(name)
-    defp quote_table(prefix, name), do: quote_table(prefix) <> "." <> quote_table(name)
+    defp quote_table(nil, name) do 
+      name
+      |> quote_table
+      |> String.upcase
+    end
+    defp quote_table(prefix, name) do 
+      table = quote_table(prefix) <> "." <> quote_table(name)
+      String.upcase(table)
+    end
 
     defp quote_table(name) when is_atom(name),
       do: quote_table(Atom.to_string(name))
@@ -402,13 +407,10 @@ if Code.ensure_loaded?(Snappyex) do
       assemble(["CREATE",
                 if_do(index.unique, "UNIQUE"),
                 "INDEX",
-                "",
                 quote_name(index.name),
                 "ON",
                 quote_table(index.prefix, index.table),
-                "",
-                "(#{fields})",
-                ""])
+                "(#{fields})"])
     end
 
     def execute_ddl({:create, %Constraint{}=constraint}) do
@@ -540,7 +542,8 @@ if Code.ensure_loaded?(Snappyex) do
     defp ecto_to_db(:uuid),       do: "VARCHAR(36)"
     defp ecto_to_db(:map),        do: "STRING"
     defp ecto_to_db({:map, _}),   do: "STRING"
-    defp ecto_to_db(:serial),     do: "BIGINT"
+    defp ecto_to_db(:serial),     do: "INTEGER"
+    defp ecto_to_db(:bigserial),  do: "BIGINT"
     defp ecto_to_db(other),       do: Atom.to_string(other)
 
   end

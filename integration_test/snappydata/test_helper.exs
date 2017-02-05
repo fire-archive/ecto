@@ -10,7 +10,7 @@ Application.put_env(:ecto, :primary_key_type, :id)
 
 # Configure SnappyData connection
 Application.put_env(:ecto, :snappydata_test_url,
-  "ecto://" <> (System.get_env("SNAPPYDATA_URL") || "snappydata.192.168.55.4.nip.io:1531")
+  "ecto://" <> (System.get_env("SNAPPYDATA_URL") || "192.168.0.21:1531")
 )
 
 # Load support files
@@ -27,13 +27,25 @@ pool =
 # Pool repo for async, safe tests
 alias Ecto.Integration.TestRepo
 
+require SnappyData.Thrift.SecurityMechanism 
+
 Application.put_env(:ecto, TestRepo,
   adapter: Ecto.Adapters.SnappyData,
   url: Application.get_env(:ecto, :snappydata_test_url) <> "/ecto_test",
-  host: "snappydata.192.168.55.4.nip.io",
+  host: "192.168.0.21",
   port: 1531,
   pool: Ecto.Adapters.SQL.Sandbox,
-  ownership_pool: pool)
+  ownership_pool: pool,
+  client_host_name: "localhost", 
+  client_id: "ElixirClient1|0x" <> Base.encode16(inspect self),
+  properties: %{"load-balance" => "false"}, 
+  for_xa: false, 
+  security:  SnappyData.Thrift.SecurityMechanism.plain, 
+  token_size: 16,
+  use_string_for_decimal: false,
+  user_name: "APP",
+  password: "APP"
+  )
 
 defmodule Ecto.Integration.TestRepo do
   use Ecto.Integration.Repo, otp_app: :ecto
@@ -46,7 +58,18 @@ Application.put_env(:ecto, PoolRepo,
   adapter: Ecto.Adapters.SnappyData,
   pool: pool,
   url: Application.get_env(:ecto, :snappydata_test_url) <> "/ecto_test",
-  pool_size: 10)
+  pool_size: 10,
+  host: "192.168.0.21",
+  port: 1531,  
+  client_host_name: "localhost", 
+  client_id: "ElixirClient1|0x" <> Base.encode16(inspect self),
+  properties: %{"load-balance" => "false"}, 
+  for_xa: false, 
+  security:  SnappyData.Thrift.SecurityMechanism.plain, 
+  token_size: 16,
+  use_string_for_decimal: false,
+  user_name: "APP",
+  password: "APP")
 
 defmodule Ecto.Integration.PoolRepo do
   use Ecto.Integration.Repo, otp_app: :ecto

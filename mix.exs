@@ -6,7 +6,7 @@ defmodule Ecto.Mixfile do
   def project do
     [app: :ecto,
      version: @version,
-     elixir: "~> 1.3",
+     elixir: "~> 1.4",
      deps: deps(),
      build_per_environment: false,
      consolidate_protocols: false,
@@ -45,7 +45,7 @@ defmodule Ecto.Mixfile do
      {:db_connection, "~> 1.1", optional: true},
      {:postgrex, "~> 0.13.0", optional: true},
      {:mariaex, "~> 0.8.0", optional: true},
-     {:snappyex, path: "../snappydata-ansible/snappyex"},
+     {:snappyex, path: "../snappyex"},
 
      # Optional
      {:sbroker, "~> 1.0", optional: true},
