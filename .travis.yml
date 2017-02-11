@@ -54,7 +54,8 @@ before_script:
   - echo "host all postgrex_cleartext_pw 127.0.0.1/32 password" | sudo tee -a /etc/postgresql/$PGVERSION/main/pg_hba.conf
   - sudo service postgresql restart
 script:
-  - ECTO_POOL=poolboy mix test || true
+  - mix test || true
+  - mix test
   - ECTO_POOL=poolboy mix test
   - ECTO_POOL=sbroker mix test
 after_script:
