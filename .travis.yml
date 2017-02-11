@@ -26,6 +26,12 @@ before_install:
   - wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
   - sudo apt-get update -qq
   - sudo apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::="--force-confnew" install postgresql-$PGVERSION postgresql-contrib-$PGVERSION
+  - wget https://github.com/fire/snappyex/releases/download/v0.0.1/snappydata-0.7-bin.tar.gz
+  - tar xvf snappydata-0.7-bin.tar.gz
+  - echo "localhost -client-bind-address=localhost -J-Duser.timezone=UTC -J-Djava.net.preferIPv4Stack=true -heap-size=4096m -thrift-framed-transport=true -thrift-server-port=1531 -thrift-binary-protocol=true" | tee -a ./snappydata-0.7-bin/conf/servers
+  - echo "localhost -J-Duser.timezone=UTC -J-Djava.net.preferIPv4Stack=true -heap-size=1024m -thrift-framed-transport=true -thrift-server-port=1530 -thrift-binary-protocol=true" | tee -a ./snappydata-0.7-bin/conf/locators
+  - echo "localhost -J-Duser.timezone=UTC -J-Djava.net.preferIPv4Stack=true -spray.can.server.parsing.max-content-length=400m -heap-size=4096m" | tee -a ./snappydata-0.7-bin/conf/leads
+  - ./snappydata-0.7-bin/sbin/snappy-start-all.sh 
 sudo: required
 dist: trusty
 cache: apt
@@ -37,6 +43,7 @@ env:
     - MIX_ENV=pg PGVERSION=9.2
     - MIX_ENV=pg
     - MIX_ENV=mysql
+    - MIX_ENV=snappydata
 install:
   - mix local.hex --force
   - mix local.rebar --force
@@ -48,6 +55,7 @@ before_script:
   - echo "host all postgrex_cleartext_pw 127.0.0.1/32 password" | sudo tee -a /etc/postgresql/$PGVERSION/main/pg_hba.conf
   - sudo service postgresql restart
 script:
+  - ECTO_POOL=poolboy mix test || true
   - ECTO_POOL=poolboy mix test
   - ECTO_POOL=sbroker mix test
 after_script:
