@@ -10,7 +10,7 @@ Application.put_env(:ecto, :primary_key_type, :id)
 
 # Configure SnappyData connection
 Application.put_env(:ecto, :snappydata_test_url,
-  "ecto://" <> (System.get_env("SNAPPYDATA_URL") || "192.168.0.21:1531")
+  "ecto://" <> (System.get_env("SNAPPYDATA_URL") || "localhost:1531")
 )
 
 # Load support files
@@ -32,7 +32,7 @@ require SnappyData.Thrift.SecurityMechanism
 Application.put_env(:ecto, TestRepo,
   adapter: Ecto.Adapters.SnappyData,
   url: Application.get_env(:ecto, :snappydata_test_url) <> "/ecto_test",
-  host: "192.168.0.21",
+  host: "localhost",
   port: 1531,
   pool: Ecto.Adapters.SQL.Sandbox,
   ownership_pool: pool,
