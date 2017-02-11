@@ -32,7 +32,7 @@ require SnappyData.Thrift.SecurityMechanism
 Application.put_env(:ecto, TestRepo,
   adapter: Ecto.Adapters.SnappyData,
   url: Application.get_env(:ecto, :snappydata_test_url) <> "/ecto_test",
-  host: "localhost",
+  host: System.get_env("SNAPPYDATA_HOST") || "localhost",
   port: 1531,
   pool: Ecto.Adapters.SQL.Sandbox,
   ownership_pool: pool,
